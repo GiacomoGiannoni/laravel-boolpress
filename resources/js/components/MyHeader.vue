@@ -1,15 +1,15 @@
 <template>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #DDD0F9;">
             <a class="navbar-brand" href="#">Boolpress</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <div class="collapse navbar-collapse" id="navbarSupportedContent" style="background-color: #DDD0F9;">
                 <ul class="navbar-nav mr-auto">
                     <li v-for="(item, index) in menuItems" class="nav-item" :key="index">
-                        <a class="nav-link" :href="item.link">{{item.label}}</a>
+                        <router-link class="nav-link" :to="{name: item.routeName}" >{{item.label}}</router-link>
                     </li>
                 </ul>
             </div>
@@ -25,19 +25,19 @@
                 menuItems: [
                     {
                         label: 'Home',
-                        link: '#'
+                        routeName: 'home'
                     },
                     {
                         label: 'Blog',
-                        link: '#'
+                        routeName: 'blog'
                     },
                     {
                         label: 'About Us',
-                        link: '#'
+                        routeName: 'about-us'
                     },
                     {
                         label: 'Contact',
-                        link: '#'
+                        routeName: 'contact'
                     }
                 ]
             }
