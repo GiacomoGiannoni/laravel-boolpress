@@ -8,23 +8,29 @@ use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function index()
     {
+        //Eager Loading Multiple Relationships
+        //$posts = Post::with(['category', 'tags'])->get();
 
         $posts = Post::with(['category', 'tags'])->paginate(2);
 
-        foreach ($posts as $post) {
+        $posts->each(function($post) {
             if ($post->cover) {
                 $post->cover = asset('storage/' . $post->cover);
             } else {
                 $post->cover = asset('img/no_cover.jpg');
             }
-        }
+        });
+
+        /*foreach ($posts as $post) {
+            if ($post->cover) {
+                $post->cover = asset('storage/' . $post->cover);
+            } else {
+                $post->cover = asset('img/no_cover.jpg');
+            }
+        }*/
 
         return response()->json([
             'success' => true,
@@ -32,27 +38,35 @@ class PostController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
     public function show($slug)
     {
-        $post = Post::where('slug', $slug)->first();
+        $post = Post::where('slug', $slug)->with(['category', 'tags'])->firstOrFail();
 
-        if ($post) {
-            return response()->json([
-                'success' => true,
-                'result' => $post
-            ]);
+        if ($post->cover) {
+            $post->cover = asset('storage/' . $post->cover);
         } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Il post richiesto non esiste!'
-            ]);
+            $post->cover = asset('img/no_cover.jpg');
         }
+
+        return response()->json([
+            'success' => true,
+            'result' => $post
+        ]);
+
     }
+
+
+    public function random() {
+
+        $post = Post::inRandomOrder()->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'result' => $post
+        ]);
+
+    }
+
 
 }
