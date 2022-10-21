@@ -19,3 +19,5 @@ Route::get('posts', 'Api\PostController@index');
 Route::get('post/random', 'Api\PostController@random');
 
 Route::get('posts/{slug}', 'Api\PostController@show');
+
+Route::post('contacts', 'Api\ContactController@store');

@@ -9,7 +9,6 @@ use App\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
 class PostController extends Controller
 {
     /**
@@ -19,7 +18,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::all();
+        $posts = Post::withTrashed()->get();
         return view('admin.posts.index', compact('posts'));
     }
 
@@ -32,6 +31,7 @@ class PostController extends Controller
     {
         $categories = Category::all();
         $tags = Tag::all();
+
         return view('admin.posts.create', compact('categories', 'tags'));
     }
 
@@ -43,6 +43,9 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
+
+        //dd($request->all());
+
         $request->validate([
             'title' => 'required|max:255',
             'content' => 'required|max:65535',
@@ -50,10 +53,13 @@ class PostController extends Controller
             'tags' => 'exists:tags,id',
             'image' => 'nullable|image|max:8000'
         ]);
+
+
         $data = $request->all();
 
         $img_path = Storage::put('cover', $data['image']);
         $data['cover'] = $img_path;
+
         $post = new Post();
         $slug = $this->calculateSlug($data['title']);
         $data['slug'] = $slug;
@@ -64,8 +70,8 @@ class PostController extends Controller
             $post->tags()->sync($data['tags']);
         }
 
-
         return redirect()->route('admin.posts.index')->with('status', 'Post creato con successo!');
+
     }
 
     /**
@@ -99,7 +105,9 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Post $post) {
+    public function update(Request $request, Post $post)
+    {
+
         $request->validate([
             'title' => 'required|max:255',
             'content' => 'required|max:65535',
@@ -108,47 +116,42 @@ class PostController extends Controller
             'image' => 'nullable|image|max:8000'
         ]);
 
-        $data = $request->all();
-        if (array_key_exists('image', $data)) {
 
+
+
+        $data = $request->all();
+
+        if (array_key_exists('image', $data)) {
             if ($post->cover) {
                 Storage::delete($post->cover);
             }
-
             $img_path = Storage::put('cover', $data['image']);
             $data['cover'] = $img_path;
         }
-
         if ($post->title !== $data['title']) {
             $data['slug'] = $this->calculateSlug($data['title']);
         }
-
         $post->update($data);
         if (array_key_exists('tags', $data)) {
             $post->tags()->sync($data['tags']);
         } else {
             $post->tags()->detach();
         }
-
-        return redirect()->route('admin.posts.index')->with('status', 'Aggiornato con successo');
+        return redirect()->route('admin.posts.index')->with('status', 'Post aggiornato con successo!');
     }
 
 
-
     protected function calculateSlug($title) {
-        $slug = str::slug($title, '-');
-
-        $checkPost = Post::where('slug', $slug)->first();
-
+        $slug = Str::slug($title, '-');
+        $checkPost = Post::withTrashed()->where('slug', $slug)->first();
         $counter = 1;
-
         while($checkPost) {
-            $slug = str::slug($title . '-' . $counter, '-');
+            $slug = Str::slug($title . '-' . $counter, '-');
             $counter++;
-            $checkPost = Post::where('slug', $slug)->first();
-        };
-
+            $checkPost = Post::withTrashed()->where('slug', $slug)->first();
+        }
         return $slug;
+
     }
 
     /**
@@ -159,23 +162,37 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
+        $post->delete();
+        return redirect()->route('admin.posts.index')->with('status', 'Cancellazione avvenuta con successo!');
+    }
+
+    public function forceDelete($id) {
+        $post = Post::withTrashed()->where('id', $id)->first();
+
         if ($post->cover) {
             Storage::delete($post->cover);
         }
-        $post->tags()->sync([]);
-        $post->delete();
-        return redirect()->route('admin.posts.index')->with('status', 'cancellazione avvenuta con successo!');
 
+        $post->tags()->sync([]);
+        $post->forceDelete();
+        return redirect()->route('admin.posts.index')->with('status', 'Eliminazione completa avvenuta con successo!');
     }
+
     public function deleteCover(Post $post) {
 
         if ($post->cover) {
             Storage::delete($post->cover);
         }
-
         $post->cover = null;
         $post->save();
-
         return redirect()->route('admin.posts.edit', [ 'post' => $post->id])->with('status', 'Immagine cancellata con successo');
+
+    }
+
+    public function restore ($id) {
+
+        $post = Post::withTrashed()->where('id', $id)->first();
+        $post->restore();
+        return redirect()->route('admin.posts.index')->with('status', 'Post ripristinato con successo');
     }
 }

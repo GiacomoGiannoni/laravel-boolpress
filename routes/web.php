@@ -12,19 +12,20 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Auth::routes();
+Auth::routes(['register' => false]);
 
 Route::middleware('auth')
     ->namespace('Admin')
     ->name('admin.')
     ->prefix('admin')
     ->group(function () {
-        route::get('/', 'HomeController@index')
-        ->name('home');
-        route::resource('posts', 'PostController');
-        route::resource('categories', 'CategoryController');
+        Route::get('/', 'HomeController@index')->name('home');
+        Route::resource('posts', 'PostController');
+        Route::resource('categories', 'CategoryController');
         Route::resource('tags', 'TagController');
 
+        Route::get('posts/restore/{post}', 'PostController@restore')->name('posts.restore');
+        Route::delete('posts/forceDelete/{post}', 'PostController@forceDelete')->name('posts.forceDelete');
         Route::delete('posts/deleteCover/{post}', 'PostController@deleteCover')->name('posts.deleteCover');
 });
 
